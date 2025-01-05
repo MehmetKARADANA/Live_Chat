@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "215818176438",
+    "project_id": "livechat-3161",
+    "storage_bucket": "livechat-3161.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215818176438:android:7a7dd19f3e40200a3fe317",
+        "android_client_info": {
+          "package_name": "com.mehmetkaradana.livechat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkzpTI3PIJQ5TkCFlLaPxiUuaDpdXzWCo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
