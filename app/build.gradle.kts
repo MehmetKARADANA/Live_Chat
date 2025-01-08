@@ -1,7 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    id("kotlin-kapt")
+ //   id("kotlin-kapt")
+    id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     alias(libs.plugins.google.gms.google.services)
 }
@@ -53,14 +54,19 @@ android {
 }
 
 dependencies {
+
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
     val nav_version = "2.8.5"
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.navigation:navigation-compose:$nav_version")
+
+
     implementation("com.google.dagger:hilt-android:2.51.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.51.1")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -78,8 +84,4 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
-}
-
-kapt {
-    correctErrorTypes = true
 }

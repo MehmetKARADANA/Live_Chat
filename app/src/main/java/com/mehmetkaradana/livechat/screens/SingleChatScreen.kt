@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
@@ -38,11 +39,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.annotations.concurrent.Background
+import com.google.firebase.firestore.auth.User
 import com.mehmetkaradana.livechat.CommonDivider
 import com.mehmetkaradana.livechat.CommonImage
 import com.mehmetkaradana.livechat.DestinationScreen
 import com.mehmetkaradana.livechat.LcViewModel
-import com.mehmetkaradana.livechat.data.ChatUser
 import com.mehmetkaradana.livechat.data.Message
 import com.mehmetkaradana.livechat.data.UserData
 import com.mehmetkaradana.livechat.navigateTo
@@ -62,6 +63,7 @@ fun SingleChatScreen(navController: NavController, vm: LcViewModel, chatId: Stri
     val currentChat = vm.chats.value.first { it.chatId == chatId }
     val chatUser = if (currentChat.user1.userId == myUser?.userId) currentChat.user2
     else currentChat.user1
+
 
     //mainthread bloklanmadan çalışır
     LaunchedEffect(key1 = Unit) {//Compose tarafından sunulan bir asenkron çalıştırma aracıdır
@@ -97,7 +99,15 @@ fun SingleChatScreen(navController: NavController, vm: LcViewModel, chatId: Stri
 
 @Composable
 fun MessageBox(modifier: Modifier, chatMessages: List<Message>, currentId: String) {
-    LazyColumn(modifier = modifier) {
+    val listState = rememberLazyListState()
+
+    // En alta kaydırmak için bir LaunchedEffect kullanabiliriz
+    LaunchedEffect(chatMessages) {
+        // Son öğeye kaydırmak için scrollToItem() fonksiyonunu kullanıyoruz
+        listState.animateScrollToItem(chatMessages.size)
+    }
+
+    LazyColumn(modifier = modifier, state = listState) {
         items(chatMessages) {message->
             val aligment=if(message.sendBy==currentId) Alignment.End else Alignment.Start
             val color=if(message.sendBy==currentId)  Color(0xFF68C400) else Color(0xFFE0E0E0)
@@ -115,7 +125,7 @@ fun MessageBox(modifier: Modifier, chatMessages: List<Message>, currentId: Strin
 
 
 @Composable
-fun ChatHeader(chatUser: ChatUser, onBackClicked: () -> Unit) {
+fun ChatHeader(chatUser: UserData, onBackClicked: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,8 +165,8 @@ fun ReplyBox(
                 .padding(8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            TextField(value = reply, onValueChange = onReplyChange, maxLines = 3)
-            Button(onClick = onSendReply) {
+            TextField(value = reply, onValueChange = onReplyChange, maxLines = 3, modifier = Modifier.weight(1f))
+            Button(onClick = onSendReply, modifier = Modifier.padding(start = 8.dp)) {
                 Text(text = "Send")
             }
         }

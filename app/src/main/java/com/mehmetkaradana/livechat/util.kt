@@ -33,9 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
-import com.mehmetkaradana.livechat.data.ChatUser
+import com.mehmetkaradana.livechat.data.UserData
 
 fun navigateTo(navController: NavController, route: String) {
     navController.navigate(route) {
@@ -116,7 +114,7 @@ fun TitleText(text: String) {
 }
 
 @Composable
-fun CommonRow(user: ChatUser, onItemClick: () -> Unit) {
+fun CommonRow(user: UserData, onItemClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

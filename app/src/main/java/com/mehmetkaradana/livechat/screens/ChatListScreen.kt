@@ -102,14 +102,7 @@ fun ChatListScreen(navController: NavController, vm: LcViewModel) {
                     )
                 }
             })
-        /*  Text(text = "helloooo chatlist")
-          FAB(showDialog = true, onFabClick = { /*TODO*/ }, onDismiss = { /*TODO*/ }) {
-              "Test"
-          }
-          BottomNavigationMenu(
-              selectedItem = BottomNavigationItem.CHATLIST,
-              navController = navController
-          )*/
+
     }
 
 

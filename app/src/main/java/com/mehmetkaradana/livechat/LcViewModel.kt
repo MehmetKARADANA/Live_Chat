@@ -2,34 +2,27 @@ package com.mehmetkaradana.livechat
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
-import com.google.android.gms.auth.api.signin.internal.Storage
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firestore.v1.DocumentTransform
 import com.mehmetkaradana.livechat.data.CHATS
 import com.mehmetkaradana.livechat.data.ChatData
-import com.mehmetkaradana.livechat.data.ChatUser
 import com.mehmetkaradana.livechat.data.Event
 import com.mehmetkaradana.livechat.data.MESSAGE
 import com.mehmetkaradana.livechat.data.Message
+import com.mehmetkaradana.livechat.data.Status
 import com.mehmetkaradana.livechat.data.USER_NODE
 import com.mehmetkaradana.livechat.data.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.lang.Exception
-import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
 
@@ -50,9 +43,12 @@ class LcViewModel @Inject constructor(
     val userData = mutableStateOf<UserData?>(null)
 
     val chats = mutableStateOf<List<ChatData>>(listOf())
-    val chatMessages= mutableStateOf<List<Message>>(listOf())
-    var currentChatMessagesListener : ListenerRegistration?=null
+    val chatMessages = mutableStateOf<List<Message>>(listOf())
+    var currentChatMessagesListener: ListenerRegistration? = null
     val inProgressChatMessages = mutableStateOf(false)
+
+    val status= mutableStateOf<List<Status>>(listOf())
+    val inProgressStatus = mutableStateOf(false)
 
     init {
         val currentUser = auth.currentUser
@@ -62,41 +58,44 @@ class LcViewModel @Inject constructor(
         }
     }
 
-    fun populateMessages(chatId: String){
-        inProgressChatMessages.value=true
-        currentChatMessagesListener=db.collection(CHATS).document(chatId).collection(MESSAGE)
-            .addSnapshotListener{ value,error->
-            if(error != null){
-                handleException(error)
-            }
-            if(value !=null ){
-                chatMessages.value=value.documents.mapNotNull {
-                    it.toObject<Message>()
-                }.sortedBy { it.timestamp }
-            }
-                inProgressChatMessages.value=false//!!
-        }
+    fun populateMessages(chatId: String) {
+        inProgressChatMessages.value = true
+        currentChatMessagesListener =
+            db.collection(CHATS).document(chatId).collection(MESSAGE).orderBy("timestamp")
+                .addSnapshotListener { value, error ->
+                    if (error != null) {
+                        handleException(error)
+                    }
+                    if (value != null) {
+                        chatMessages.value = value.documents.mapNotNull {
+                            it.toObject<Message>()
+                        }
+                    }
+                    inProgressChatMessages.value = false//!!
+                }
     }
 
-    fun depopulateMessages(){
-        chatMessages.value= listOf()
-        currentChatMessagesListener=null
+    fun depopulateMessages() {
+        chatMessages.value = listOf()
+        currentChatMessagesListener = null
     }
 
-    fun populateChats(){
-        inProcessChats.value=true
-        db.collection(CHATS).where(Filter.or(
-            Filter.equalTo("user1.userId",userData.value?.userId),
-            Filter.equalTo("user2.userId",userData.value?.userId)
-        )).addSnapshotListener{value,error ->
-            if(error!=null){//
+    fun populateChats() {
+        inProcessChats.value = true
+        db.collection(CHATS).where(
+            Filter.or(
+                Filter.equalTo("user1.userId", userData.value?.userId),
+                Filter.equalTo("user2.userId", userData.value?.userId)
+            )
+        ).addSnapshotListener { value, error ->
+            if (error != null) {//
                 handleException(error)
-            }else{
-                if(value!=null){
-                    chats.value=value.documents.mapNotNull {
+            } else {
+                if (value != null) {
+                    chats.value = value.documents.mapNotNull {
                         it.toObject<ChatData>()
                     }
-                    inProcessChats.value=false
+                    inProcessChats.value = false
                 }
             }
 
@@ -104,6 +103,7 @@ class LcViewModel @Inject constructor(
 
 
     }
+
     fun signUp(name: String, number: String, email: String, password: String) {
         inProcess.value = true
 
@@ -160,15 +160,16 @@ class LcViewModel @Inject constructor(
         signIn.value = false
         userData.value = null
         depopulateMessages()
-        currentChatMessagesListener=null
+        currentChatMessagesListener = null
         eventMutableState.value = Event("Logged Out")
     }
 
 
-    fun onSendReply(chatId : String,message: String){
+    fun onSendReply(chatId: String, message: String) {
         //val time = Calendar.getInstance().time.toString()
-        val time = FieldValue.serverTimestamp().toString()
-        val msg= Message(userData.value?.userId,message,time)
+        val time = FieldValue.serverTimestamp()
+
+        val msg = Message(userData.value?.userId, message, timestamp = time)
         db.collection(CHATS).document(chatId).collection(MESSAGE).document().set(msg)
     }
 
@@ -233,6 +234,81 @@ class LcViewModel @Inject constructor(
                 handleException(it, "Cannot Retrieve User")
             }
         }
+
+        updateChatUser(
+            uid = uid,
+            name = userData.name,
+            number = userData.number,
+            imageurl = userData.imageUrl
+        )
+    }
+
+    fun updateChatUser(
+        uid: String?, name: String? = null,
+        number: String? = null,
+        imageurl: String? = null
+    ) {
+        db.collection(CHATS).where(
+            Filter.or(
+                Filter.equalTo("user1.userId", uid),
+                Filter.equalTo("user2.userId", uid)
+            )
+        ).get().addOnSuccessListener { documents ->
+            if (documents.isEmpty) {
+                handleException()
+            } else {
+                for (document in documents) {
+                    val chat = document.toObject<ChatData>()
+
+                    // Eşleşen kullanıcıyı kontrol et ve fonksiyonu uygula
+                    if (chat.user1.userId == uid) {
+                        val chatuser1 = UserData(
+                            userId = uid,
+                            name = name ?: chat.user1.name,
+                            number = number ?: chat.user1.number,
+                            imageUrl = imageurl ?: chat.user1.imageUrl
+                        )
+                        db.collection(CHATS)
+                            .document(document.id)
+                            .update("user1", chatuser1)
+                            .addOnSuccessListener {
+                                Log.i("ChatUserUpdate", "User1 bilgileri başarıyla güncellendi.")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.d(
+                                    "ChatUserUpdate",
+                                    "User2 güncellenirken hata oluştu: ${e.message}"
+                                )
+                            }
+
+                    } else if (chat.user2.userId == uid) {
+                        val chatuser2 = UserData(
+                            userId = uid,
+                            name = name ?: chat.user1.name,
+                            number = number ?: chat.user1.number,
+                            imageUrl = imageurl ?: chat.user1.imageUrl
+                        )
+                        db.collection(CHATS)
+                            .document(document.id)
+                            .update("user2", chatuser2)
+                            .addOnSuccessListener {
+                                Log.i("ChatUserUpdate", "User2 bilgileri başarıyla güncellendi.")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.d(
+                                    "ChatUserUpdate",
+                                    "User2 güncellenirken hata oluştu: ${e.message}"
+                                )
+                            }
+
+                    }
+                }
+            }
+
+        }.addOnFailureListener {
+            handleException(it)
+        }
+
     }
 
     private fun getUserData(uid: String) {
@@ -284,27 +360,28 @@ class LcViewModel @Inject constructor(
                                 handleException(customMessage = "number not found")
                             } else {
                                 val chatPartner = it.toObjects<UserData>()[0]
-                                val id = db.collection(CHATS).document().id//Firestore tarafından otomatik olarak oluşturulan benzersiz
+                                val id = db.collection(CHATS)
+                                    .document().id//Firestore tarafından otomatik olarak oluşturulan benzersiz
                                 val chat = ChatData(
                                     chatId = id,
-                                    ChatUser(
-                                        userData.value?.userId,
-                                        userData.value?.name,
-                                        userData.value?.imageUrl,
-                                        userData.value?.number
+                                    UserData(
+                                        userId = userData.value?.userId,
+                                        name = userData.value?.name,
+                                        imageUrl = userData.value?.imageUrl,
+                                        number = userData.value?.number
                                     ),
-                                    ChatUser(
-                                        chatPartner.userId,
-                                        chatPartner.name,
-                                        chatPartner.imageUrl,
-                                        chatPartner.number
+                                    UserData(
+                                        userId = chatPartner.userId,
+                                        name = chatPartner.name,
+                                        imageUrl = chatPartner.imageUrl,
+                                        number = chatPartner.number
                                     )
                                 )
 
                                 db.collection(CHATS).document(id).set(chat)
 
                             }
-                        }.addOnFailureListener{
+                        }.addOnFailureListener {
                             handleException(it)
                         }
                 } else {
