@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Filter
@@ -18,11 +19,13 @@ import com.mehmetkaradana.livechat.data.ChatData
 import com.mehmetkaradana.livechat.data.Event
 import com.mehmetkaradana.livechat.data.MESSAGE
 import com.mehmetkaradana.livechat.data.Message
+import com.mehmetkaradana.livechat.data.STATUS
 import com.mehmetkaradana.livechat.data.Status
 import com.mehmetkaradana.livechat.data.USER_NODE
 import com.mehmetkaradana.livechat.data.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.lang.Exception
+import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
 
@@ -47,7 +50,7 @@ class LcViewModel @Inject constructor(
     var currentChatMessagesListener: ListenerRegistration? = null
     val inProgressChatMessages = mutableStateOf(false)
 
-    val status= mutableStateOf<List<Status>>(listOf())
+    val status = mutableStateOf<List<Status>>(listOf())
     val inProgressStatus = mutableStateOf(false)
 
     init {
@@ -102,6 +105,52 @@ class LcViewModel @Inject constructor(
         }
 
 
+    }
+
+    fun populatesStatus() {
+        val timeDelta = 24L * 60 * 60 * 1000
+        val time = Timestamp.now()
+        val twentyFourHoursAgoInSeconds = time.seconds - timeDelta / 1000 // Milisaniyeyi saniyeye çeviriyoruz
+        val twentyFourHoursAgo = Timestamp(twentyFourHoursAgoInSeconds, time.nanoseconds) // Nanoseconds kısmını koruyoruz
+
+        inProgressStatus.value = true
+        db.collection(CHATS).where(
+            Filter.or(
+                Filter.equalTo("user1.userId", userData.value?.userId),
+                Filter.equalTo("user2.userId", userData.value?.userId)
+            )
+        ).addSnapshotListener { value, error ->
+            if (error != null) {
+                handleException(error)
+            }
+
+            if (value != null) {
+
+                val currentConnections = arrayListOf(userData.value?.userId)
+
+                val chats = value.toObjects<ChatData>()
+                chats.forEach { chat ->
+                    if (userData.value?.userId == chat.user1.userId) {
+                        currentConnections.add(chat.user2.userId)
+                    } else
+                        currentConnections.add(chat.user1.userId)
+
+                }
+                db.collection(STATUS).whereGreaterThan("timestamp",twentyFourHoursAgo).whereIn("user.userId", currentConnections)
+                    .addSnapshotListener { value2, error2 ->
+                        if (error2 != null) {
+                            handleException(error)
+                        }
+                        if (value2 != null) {
+                            status.value = value2.toObjects()
+                            inProgressStatus.value = false
+                        }
+                    }
+
+            }
+            inProgressStatus.value=false
+
+        }
     }
 
     fun signUp(name: String, number: String, email: String, password: String) {
@@ -177,11 +226,32 @@ class LcViewModel @Inject constructor(
 
         uploadImage(uri) {
             createOrUpdateProfile(imageurl = it.toString())
-            Log.i("uploadProfileImage : ", "imageUrl" + it.toString())
+            // Log.i("uploadProfileImage : ", "imageUrl" + it.toString())
         }
 
     }
 
+    fun uploadStatus(uri: Uri) {
+
+        uploadImage(uri) {//!! parametre olan uri contentpicker yanıtı onu almamalıyım
+            createStatus(it.toString())
+        }
+
+    }
+
+    fun createStatus(imageurl: String) {
+        val newStatus = Status(
+            user = UserData(
+                userId = userData.value?.userId,
+                name = userData.value?.name,
+                imageUrl = userData.value?.imageUrl,
+                number = userData.value?.number
+            ),
+            imageUrl = imageurl, timestamp = FieldValue.serverTimestamp()
+        )
+
+        db.collection(STATUS).document().set(newStatus)
+    }
 
     fun uploadImage(uri: Uri, onSuccess: (Uri) -> Unit) {
         inProcess.value = true
@@ -225,6 +295,19 @@ class LcViewModel @Inject constructor(
                 if (it.exists()) {
                     db.collection(USER_NODE).document(uid).update(userData.toMap())
                     inProcess.value = false
+                    getUserData(uid)
+                    updateChatUser(
+                        uid = uid,
+                        name = userData.name,
+                        number = userData.number,
+                        imageurl = userData.imageUrl
+                    )
+                    updateStatusUser(
+                        uid = uid,
+                        name = userData.name,
+                        number = userData.number,
+                        imageurl = userData.imageUrl
+                    )
                 } else {
                     db.collection(USER_NODE).document(uid).set(userData)
                     inProcess.value = false
@@ -235,15 +318,10 @@ class LcViewModel @Inject constructor(
             }
         }
 
-        updateChatUser(
-            uid = uid,
-            name = userData.name,
-            number = userData.number,
-            imageurl = userData.imageUrl
-        )
+
     }
 
-    fun updateChatUser(
+    private fun updateChatUser(
         uid: String?, name: String? = null,
         number: String? = null,
         imageurl: String? = null
@@ -275,10 +353,10 @@ class LcViewModel @Inject constructor(
                                 Log.i("ChatUserUpdate", "User1 bilgileri başarıyla güncellendi.")
                             }
                             .addOnFailureListener { e ->
-                                Log.d(
-                                    "ChatUserUpdate",
-                                    "User2 güncellenirken hata oluştu: ${e.message}"
-                                )
+                                /*   Log.d(
+                                       "ChatUserUpdate",
+                                       "User2 güncellenirken hata oluştu: ${e.message}"
+                                   )*/
                             }
 
                     } else if (chat.user2.userId == uid) {
@@ -311,6 +389,54 @@ class LcViewModel @Inject constructor(
 
     }
 
+    private fun updateStatusUser(
+        uid: String?, name: String? = null,
+        number: String? = null,
+        imageurl: String? = null
+    ) {
+        db.collection(STATUS).where(
+
+                Filter.equalTo("user.userId", uid),
+
+        ).get().addOnSuccessListener { documents ->
+            if (documents.isEmpty) {
+                handleException()
+            } else {
+                for (document in documents) {
+                    val status = document.toObject<Status>()
+
+                    // Eşleşen kullanıcıyı kontrol et ve fonksiyonu uygula
+                    if (status.user.userId == uid) {
+                        val statusUser = UserData(
+                            userId = uid,
+                            name = name ?: status.user.name,
+                            number = number ?: status.user.number,
+                            imageUrl = imageurl ?: status.user.imageUrl
+                        )
+                        db.collection(STATUS)
+                            .document(document.id)
+                            .update("user", statusUser)
+                            .addOnSuccessListener {
+                                Log.i("StatusUserUpdate", "User bilgileri başarıyla güncellendi.")
+                            }
+                            .addOnFailureListener { e ->
+                                Log.d(
+                                    "StatusUserUpdate",
+                                    "User güncellenirken hata oluştu: ${e.message}"
+                                )
+                            }
+
+                    }
+
+                }
+            }
+
+        }.addOnFailureListener {
+            handleException(it)
+        }
+
+    }
+
     private fun getUserData(uid: String) {
         inProcess.value = true
         db.collection(USER_NODE).document(uid).addSnapshotListener { value, error ->
@@ -324,6 +450,7 @@ class LcViewModel @Inject constructor(
                 userData.value = user
                 inProcess.value = false
                 populateChats()
+                populatesStatus()
             }
 
         }

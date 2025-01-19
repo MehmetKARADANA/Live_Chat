@@ -45,5 +45,5 @@ data class Message(
 data class Status(
     val user : UserData=UserData(),
     val imageUrl : String?="",
-    val timestamp: String?=null
+    val timestamp: Any?=null
 )
