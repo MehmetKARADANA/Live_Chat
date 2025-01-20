@@ -1,4 +1,4 @@
-package com.mehmetkaradana.livechat.screens
+package com.mehmetkaradana.livechat.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.mehmetkaradana.livechat.DestinationScreen
 import com.mehmetkaradana.livechat.R
-import com.mehmetkaradana.livechat.navigateTo
+import com.mehmetkaradana.livechat.utils.navigateTo
 
 enum class BottomNavigationItem(val image : Int,val navDestinationScreen: DestinationScreen){
     CHATLIST(R.drawable.chat,DestinationScreen.ChatList),

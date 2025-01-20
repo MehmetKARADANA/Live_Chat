@@ -1,4 +1,4 @@
-package com.mehmetkaradana.livechat.screens
+package com.mehmetkaradana.livechat.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.InputTransformation.Companion.keyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
@@ -26,16 +25,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.mehmetkaradana.livechat.CommonProgressBar
-import com.mehmetkaradana.livechat.CommonRow
+import com.mehmetkaradana.livechat.utils.CommonProgressBar
+import com.mehmetkaradana.livechat.utils.CommonRow
 import com.mehmetkaradana.livechat.DestinationScreen
-import com.mehmetkaradana.livechat.LcViewModel
-import com.mehmetkaradana.livechat.TitleText
-import com.mehmetkaradana.livechat.navigateTo
+import com.mehmetkaradana.livechat.viewmodels.LcViewModel
+import com.mehmetkaradana.livechat.utils.TitleText
+import com.mehmetkaradana.livechat.utils.navigateTo
+import com.mehmetkaradana.livechat.ui.components.BottomNavigationItem
+import com.mehmetkaradana.livechat.ui.components.BottomNavigationMenu
 
 @Composable
 fun ChatListScreen(navController: NavController, vm: LcViewModel) {

@@ -1,8 +1,6 @@
-package com.mehmetkaradana.livechat.screens
+package com.mehmetkaradana.livechat.ui.screens
 
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,14 +23,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.mehmetkaradana.livechat.CommonDivider
-import com.mehmetkaradana.livechat.CommonProgressBar
-import com.mehmetkaradana.livechat.CommonRow
+import com.mehmetkaradana.livechat.utils.CommonDivider
+import com.mehmetkaradana.livechat.utils.CommonProgressBar
+import com.mehmetkaradana.livechat.utils.CommonRow
 import com.mehmetkaradana.livechat.DestinationScreen
-import com.mehmetkaradana.livechat.LcViewModel
-import com.mehmetkaradana.livechat.TitleText
-import com.mehmetkaradana.livechat.data.UserData
-import com.mehmetkaradana.livechat.navigateTo
+import com.mehmetkaradana.livechat.viewmodels.LcViewModel
+import com.mehmetkaradana.livechat.utils.TitleText
+import com.mehmetkaradana.livechat.utils.navigateTo
+import com.mehmetkaradana.livechat.ui.components.BottomNavigationItem
+import com.mehmetkaradana.livechat.ui.components.BottomNavigationMenu
 
 @Composable
 fun StatusScreen(navController: NavController, vm: LcViewModel) {
@@ -84,7 +83,9 @@ fun StatusScreen(navController: NavController, vm: LcViewModel) {
                     }
                 } else {
                     if (myStatus.isNotEmpty()) {
+                        println("mystatus87 :"+myStatus)
                         CommonRow(user = userData!!) {
+                            println("mystatus87 :"+myStatus)
                             navigateTo(
                                 navController = navController,
                                 route = DestinationScreen.SingleStatus.createRoute(userData.userId!!)

@@ -1,4 +1,4 @@
-package com.mehmetkaradana.livechat
+package com.mehmetkaradana.livechat.utils
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth

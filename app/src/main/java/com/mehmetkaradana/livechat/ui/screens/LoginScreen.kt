@@ -1,4 +1,4 @@
-package com.mehmetkaradana.livechat.screens
+package com.mehmetkaradana.livechat.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -26,15 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.mehmetkaradana.livechat.CheckSignedIn
-import com.mehmetkaradana.livechat.CommonProgressBar
+import com.mehmetkaradana.livechat.utils.CheckSignedIn
+import com.mehmetkaradana.livechat.utils.CommonProgressBar
 import com.mehmetkaradana.livechat.DestinationScreen
-import com.mehmetkaradana.livechat.LcViewModel
+import com.mehmetkaradana.livechat.viewmodels.LcViewModel
 import com.mehmetkaradana.livechat.R
-import com.mehmetkaradana.livechat.navigateTo
+import com.mehmetkaradana.livechat.utils.navigateTo
 
 @Composable
-fun LoginScreen(vm : LcViewModel,navController: NavController) {
+fun LoginScreen(vm : LcViewModel, navController: NavController) {
 
     CheckSignedIn(vm = vm, navController = navController)
    if(vm.inProcess.value){

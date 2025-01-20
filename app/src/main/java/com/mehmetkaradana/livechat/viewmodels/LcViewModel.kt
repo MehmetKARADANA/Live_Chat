@@ -1,16 +1,18 @@
-package com.mehmetkaradana.livechat
+package com.mehmetkaradana.livechat.viewmodels
 
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
+import com.google.firebase.StartupTime
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.firestoreSettings
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
@@ -25,7 +27,6 @@ import com.mehmetkaradana.livechat.data.USER_NODE
 import com.mehmetkaradana.livechat.data.UserData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.lang.Exception
-import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
 
@@ -108,10 +109,11 @@ class LcViewModel @Inject constructor(
     }
 
     fun populatesStatus() {
-        val timeDelta = 24L * 60 * 60 * 1000
+        val timeDelta = 24L * 60 * 60
+
         val time = Timestamp.now()
-        val twentyFourHoursAgoInSeconds = time.seconds - timeDelta / 1000 // Milisaniyeyi saniyeye çeviriyoruz
-        val twentyFourHoursAgo = Timestamp(twentyFourHoursAgoInSeconds, time.nanoseconds) // Nanoseconds kısmını koruyoruz
+        // Milisaniyeyi saniyeye çeviriyoruz
+        val twentyFourHoursAgo = Timestamp(time.seconds-timeDelta, time.nanoseconds)
 
         inProgressStatus.value = true
         db.collection(CHATS).where(
@@ -134,15 +136,15 @@ class LcViewModel @Inject constructor(
                         currentConnections.add(chat.user2.userId)
                     } else
                         currentConnections.add(chat.user1.userId)
-
                 }
-                db.collection(STATUS).whereGreaterThan("timestamp",twentyFourHoursAgo).whereIn("user.userId", currentConnections)
+
+                db.collection(STATUS).whereIn("user.userId", currentConnections)/*.whereGreaterThan("timestamp",twentyFourHoursAgo)*/
                     .addSnapshotListener { value2, error2 ->
                         if (error2 != null) {
                             handleException(error)
                         }
                         if (value2 != null) {
-                            status.value = value2.toObjects()
+                            status.value = value2.toObjects<Status>()
                             inProgressStatus.value = false
                         }
                     }
@@ -236,6 +238,8 @@ class LcViewModel @Inject constructor(
         uploadImage(uri) {//!! parametre olan uri contentpicker yanıtı onu almamalıyım
             createStatus(it.toString())
         }
+
+        populatesStatus()
 
     }
 

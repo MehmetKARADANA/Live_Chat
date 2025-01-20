@@ -1,5 +1,6 @@
 package com.mehmetkaradana.livechat
 
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,16 +14,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.mehmetkaradana.livechat.screens.ChatListScreen
-import com.mehmetkaradana.livechat.screens.LoginScreen
-import com.mehmetkaradana.livechat.screens.ProfileScreen
-import com.mehmetkaradana.livechat.screens.SignUpScreen
-import com.mehmetkaradana.livechat.screens.SingleChatScreen
-import com.mehmetkaradana.livechat.screens.SingleStatusScreen
-import com.mehmetkaradana.livechat.screens.StatusScreen
+import com.mehmetkaradana.livechat.ui.screens.ChatListScreen
+import com.mehmetkaradana.livechat.ui.screens.LoginScreen
+import com.mehmetkaradana.livechat.ui.screens.ProfileScreen
+import com.mehmetkaradana.livechat.ui.screens.SignUpScreen
+import com.mehmetkaradana.livechat.ui.screens.SingleChatScreen
+import com.mehmetkaradana.livechat.ui.screens.SingleStatusScreen
+import com.mehmetkaradana.livechat.ui.screens.StatusScreen
 import com.mehmetkaradana.livechat.ui.theme.LiveChatTheme
+import com.mehmetkaradana.livechat.viewmodels.LcViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.processor.internal.definecomponent.codegen._dagger_hilt_android_components_ViewWithFragmentComponent
+import dagger.hilt.android.HiltAndroidApp
 
 
 sealed class DestinationScreen(var route: String){
@@ -47,7 +49,6 @@ sealed class DestinationScreen(var route: String){
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-       // enableEdgeToEdge()
         setContent {
             LiveChatTheme {
                 Surface(modifier = Modifier.fillMaxSize(),
@@ -87,7 +88,10 @@ fun ChatAppNavigation(){
             StatusScreen(navController,vm)
         }
         composable(DestinationScreen.SingleStatus.route) {
-            SingleStatusScreen()
+            val userId=it.arguments?.getString("userId")
+            userId?.let {
+                SingleStatusScreen(navController,vm,userId)
+            }
         }
 
         composable(DestinationScreen.Profile.route) {
@@ -109,4 +113,9 @@ fun GreetingPreview() {
     LiveChatTheme {
 
     }
+}
+
+@HiltAndroidApp
+class LcApplication : Application() {
+
 }
