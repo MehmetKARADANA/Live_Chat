@@ -1,11 +1,13 @@
 package com.mehmetkaradana.livechat.viewmodels
 
+import android.app.Application
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.text.isDigitsOnly
-import androidx.lifecycle.ViewModel
-import com.google.firebase.StartupTime
+import androidx.lifecycle.AndroidViewModel
+import androidx.navigation.NavController
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -16,6 +18,7 @@ import com.google.firebase.firestore.firestoreSettings
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.google.firebase.storage.FirebaseStorage
+import com.mehmetkaradana.livechat.DestinationScreen
 import com.mehmetkaradana.livechat.data.CHATS
 import com.mehmetkaradana.livechat.data.ChatData
 import com.mehmetkaradana.livechat.data.Event
@@ -25,6 +28,7 @@ import com.mehmetkaradana.livechat.data.STATUS
 import com.mehmetkaradana.livechat.data.Status
 import com.mehmetkaradana.livechat.data.USER_NODE
 import com.mehmetkaradana.livechat.data.UserData
+import com.mehmetkaradana.livechat.utils.navigateTo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.lang.Exception
 import java.util.UUID
@@ -36,9 +40,9 @@ class LcViewModel @Inject constructor(
 
     val auth: FirebaseAuth,
     val db: FirebaseFirestore,
-    val storage: FirebaseStorage
-
-) : ViewModel() {
+    val storage: FirebaseStorage,
+    application: Application
+) : AndroidViewModel(application = application) {
 
     val inProcess = mutableStateOf(false)
     val inProcessChats = mutableStateOf(false)
@@ -175,6 +179,7 @@ class LcViewModel @Inject constructor(
                         createOrUpdateProfile(name, number)
                     } else {
                         handleException(it.exception, customMessage = "Sign Up failed")
+                        inProcess.value = false
                     }
                 }
             } else {
@@ -201,6 +206,7 @@ class LcViewModel @Inject constructor(
                     }
                 } else {
                     handleException(exception = it.exception, customMessage = "Login Failed")
+                    inProcess.value = false
                 }
             }
         }
@@ -466,6 +472,7 @@ class LcViewModel @Inject constructor(
         val errorMsg = exception?.localizedMessage ?: ""
         val message = if (customMessage.isNullOrEmpty()) errorMsg else customMessage
         eventMutableState.value = Event(message)
+        Toast.makeText(getApplication(),message, Toast.LENGTH_LONG).show()
     }
 
     fun onAddChat(number: String) {

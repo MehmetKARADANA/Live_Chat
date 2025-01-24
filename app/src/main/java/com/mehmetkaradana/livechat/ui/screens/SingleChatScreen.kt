@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +15,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ShapeDefaults
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -32,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -40,6 +47,8 @@ import com.mehmetkaradana.livechat.utils.CommonImage
 import com.mehmetkaradana.livechat.viewmodels.LcViewModel
 import com.mehmetkaradana.livechat.data.Message
 import com.mehmetkaradana.livechat.data.UserData
+import com.mehmetkaradana.livechat.ui.theme.ColorChatMessage
+import com.mehmetkaradana.livechat.ui.theme.ColorUserMessage
 
 @Composable
 fun SingleChatScreen(navController: NavController, vm: LcViewModel, chatId: String) {
@@ -102,8 +111,8 @@ fun MessageBox(modifier: Modifier, chatMessages: List<Message>, currentId: Strin
 
     LazyColumn(modifier = modifier, state = listState) {
         items(chatMessages) {message->
-            val aligment=if(message.sendBy==currentId) Alignment.End else Alignment.Start
-            val color=if(message.sendBy==currentId)  Color(0xFF68C400) else Color(0xFFa0E0E1)
+           /* val aligment=if(message.sendBy==currentId) Alignment.End else Alignment.Start
+            val color=if(message.sendBy==currentId)  ColorUserMessage else ColorChatMessage
             Column(modifier= Modifier
                 .fillMaxWidth()
                 .padding(8.dp), horizontalAlignment = aligment) {
@@ -111,9 +120,40 @@ fun MessageBox(modifier: Modifier, chatMessages: List<Message>, currentId: Strin
                     shape = RectangleShape)
                     .padding(8.dp),
                     fontWeight = FontWeight.Bold)
+            }*/
+            MessageRow(message=message,currentId=currentId)
+        }
+    }
+}
+
+
+@Composable
+fun MessageRow(message: Message,currentId: String) {
+    val isCurrentUser=message.sendBy==currentId
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .align(if (!isCurrentUser) Alignment.BottomStart else Alignment.BottomEnd)
+                    .padding(
+                        start = if (!isCurrentUser) 8.dp else 70.dp,
+                        end = if (!isCurrentUser) 70.dp else 8.dp,
+                        top = 8.dp,
+                        bottom = 8.dp
+                    )
+                    .clip(RoundedCornerShape(48f))
+                    .background(if (!isCurrentUser) ColorChatMessage else ColorUserMessage)
+                    .padding(16.dp)
+
+            ) {
+                SelectionContainer {
+                    Text(text =message.message.toString(), fontWeight = FontWeight.W500, color = Color.White)
+                }
+
             }
         }
     }
+
 }
 
 
@@ -144,7 +184,7 @@ fun ChatHeader(chatUser: UserData, onBackClicked: () -> Unit) {
 
     }
 }
-
+ 
 @Composable
 fun ReplyBox(
     reply: String,
@@ -159,7 +199,7 @@ fun ReplyBox(
                 .padding(8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            TextField(value = reply, onValueChange = onReplyChange, maxLines = 3, modifier = Modifier.weight(1f))
+            OutlinedTextField(value = reply, onValueChange = onReplyChange, maxLines = 3, modifier = Modifier.weight(1f))
             Button(onClick = onSendReply, modifier = Modifier.padding(start = 8.dp)) {
                 Icon(Icons.Rounded.Send, contentDescription = "")
               //  Text(text = " Send")
