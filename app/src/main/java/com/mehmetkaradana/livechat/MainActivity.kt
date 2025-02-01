@@ -27,18 +27,18 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 
 
-sealed class DestinationScreen(var route: String){
+sealed class DestinationScreen(var route: String) {
     object SignUp : DestinationScreen("signup")
     object Login : DestinationScreen("login")
     object Profile : DestinationScreen("profile")
     object ChatList : DestinationScreen("chatList")
-    object SingleChat : DestinationScreen("singleChat/{chatId}"){
-        fun createRoute(chatId : String) = "singleChat/$chatId"
+    object SingleChat : DestinationScreen("singleChat/{chatId}") {
+        fun createRoute(chatId: String) = "singleChat/$chatId"
     }
 
     object StatusList : DestinationScreen("statusList")
-    object SingleStatus  :DestinationScreen("singleStatus/{userId}"){
-        fun createRoute(userId : String) = "singleStatus/$userId"
+    object SingleStatus : DestinationScreen("singleStatus/{userId}") {
+        fun createRoute(userId: String) = "singleStatus/$userId"
     }
 
 
@@ -51,60 +51,60 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             LiveChatTheme {
-                Surface(modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     ChatAppNavigation()
                 }
             }
         }
     }
 
-@Composable
-fun ChatAppNavigation(){
-    val navController = rememberNavController()
-    var vm= hiltViewModel<LcViewModel>()
+    @Composable
+    fun ChatAppNavigation() {
+        val navController = rememberNavController()
+        var vm = hiltViewModel<LcViewModel>()
 
-    NavHost(navController = navController, startDestination = DestinationScreen.SignUp.route) {
+        NavHost(navController = navController, startDestination = DestinationScreen.SignUp.route) {
 
-        composable(DestinationScreen.SignUp.route) {
-            SignUpScreen(navController,vm)
-        }
-
-        composable(DestinationScreen.Login.route) {
-            LoginScreen(vm,navController)
-        }
-
-        composable(DestinationScreen.ChatList.route) {
-            ChatListScreen(navController,vm)
-        }
-        composable(DestinationScreen.SingleChat.route) {
-            val chatId=it.arguments?.getString("chatId")
-            chatId?.let {
-                SingleChatScreen(navController,vm,chatId)
+            composable(DestinationScreen.SignUp.route) {
+                SignUpScreen(navController, vm)
             }
 
-        }
-        composable(DestinationScreen.StatusList.route) {
-            StatusScreen(navController,vm)
-        }
-        composable(DestinationScreen.SingleStatus.route) {
-            val userId=it.arguments?.getString("userId")
-            userId?.let {
-                SingleStatusScreen(navController,vm,userId)
+            composable(DestinationScreen.Login.route) {
+                LoginScreen(vm, navController)
             }
+
+            composable(DestinationScreen.ChatList.route) {
+                ChatListScreen(navController, vm)
+            }
+            composable(DestinationScreen.SingleChat.route) {
+                val chatId = it.arguments?.getString("chatId")
+                chatId?.let {
+                    SingleChatScreen(navController, vm, chatId)
+                }
+
+            }
+            composable(DestinationScreen.StatusList.route) {
+                StatusScreen(navController, vm)
+            }
+            composable(DestinationScreen.SingleStatus.route) {
+                val userId = it.arguments?.getString("userId")
+                userId?.let {
+                    SingleStatusScreen(navController, vm, userId)
+                }
+            }
+
+            composable(DestinationScreen.Profile.route) {
+                ProfileScreen(navController, vm)
+            }
+
+
         }
-
-        composable(DestinationScreen.Profile.route) {
-            ProfileScreen(navController,vm)
-        }
-
-
 
     }
-
 }
-}
-
 
 
 @Preview(showBackground = true)

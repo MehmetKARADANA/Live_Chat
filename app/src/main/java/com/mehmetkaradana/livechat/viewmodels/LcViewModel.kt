@@ -164,6 +164,7 @@ class LcViewModel @Inject constructor(
 
         if (name.isEmpty() or number.isEmpty() or email.isEmpty() or password.isEmpty()) {
             handleException(customMessage = " Please Fill All fields")
+            inProcess.value=false
             return
         }
 
